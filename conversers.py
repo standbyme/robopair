@@ -1,6 +1,6 @@
 from fastchat.model import get_conversation_template
 import common
-from language_models import GPT, HuggingFace, DolphinModel
+from language_models import GPT, HuggingFace, DolphinModel, GeminiRoboticsER
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from config import VICUNA_PATH, LLAMA_PATH, ATTACK_TEMP, TARGET_TEMP, ATTACK_TOP_P, TARGET_TOP_P   
@@ -182,6 +182,8 @@ class TargetLM():
                 full_prompts.append(conv.messages[-1][1])
             elif "dolphin" in self.model_name:
                 full_prompts.append(conv.messages[-1][1])
+            elif "gemini-robotics-er" in self.model_name:
+                full_prompts.append(conv.messages[-1][1])
             else:
                 conv.append_message(conv.roles[1], None) 
                 full_prompts.append(conv.get_prompt())
@@ -200,6 +202,8 @@ def load_indiv_model(model_name, video_path, device=None):
     model_path, template = get_model_path_and_template(model_name)
     if model_name in ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]:
         lm = GPT(model_name)
+    elif model_name in ["gemini-robotics-er-1.6", "gemini-robotics-er-1.6-preview"]:
+        lm = GeminiRoboticsER(model_name, video_path)
     elif model_name == "dolphin":
         lm = DolphinModel(model_name, video_path)
     else:
@@ -264,11 +268,16 @@ def get_model_path_and_template(model_name):
         "dolphin":{
             "path":"dolphin",
             "template":"dolphin"
+        },
+        "gemini-robotics-er-1.6":{
+            "path":"gemini-robotics-er-1.6-preview",
+            "template":"gpt-4"
+        },
+        "gemini-robotics-er-1.6-preview":{
+            "path":"gemini-robotics-er-1.6-preview",
+            "template":"gpt-4"
         }
     }
     path, template = full_model_dict[model_name]["path"], full_model_dict[model_name]["template"]
     return path, template
 
-
-
-    

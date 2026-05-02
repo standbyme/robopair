@@ -151,7 +151,12 @@ if __name__ == '__main__':
         "--target-model",
         default = "dolphin",
         help = "Name of target model.",
-        choices=["vicuna", "llama-2", "gpt-3.5-turbo", "gpt-4", "claude-instant-1","claude-2", "palm-2", "dolphin", "gpt-4o"]
+        choices=[
+            "vicuna", "llama-2", "gpt-3.5-turbo", "gpt-4",
+            "claude-instant-1", "claude-2", "palm-2", "dolphin",
+            "gpt-4o", "gemini-robotics-er-1.6",
+            "gemini-robotics-er-1.6-preview"
+        ]
     )
     parser.add_argument(
         "--target-max-n-tokens",
@@ -237,7 +242,7 @@ if __name__ == '__main__':
         "--video-path",
         type=str,
         default="data/dolphin/NuScenes/TrafficLight/video.mp4",
-        help="Video path for Dolphin model"
+        help="Video path for Dolphin model, or image path for Gemini Robotics-ER"
     )
     parser.add_argument(
         "--algorithm",

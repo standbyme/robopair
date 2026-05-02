@@ -4,6 +4,8 @@ import torch
 import gc
 from typing import Dict, List
 import os
+from google import genai
+from google.genai import types
 
 ### Dolphin
 import os
@@ -142,6 +144,79 @@ class GPT(LanguageModel):
                         temperature: float,
                         top_p: float = 1.0,):
         return [self.generate(conv, max_n_tokens, temperature, top_p) for conv in convs_list]
+
+
+class GeminiRoboticsER(LanguageModel):
+    API_RETRY_SLEEP = 10
+    API_ERROR_OUTPUT = "$ERROR$"
+    API_MAX_RETRY = 5
+    MODEL_ALIASES = {
+        "gemini-robotics-er-1.6": "gemini-robotics-er-1.6-preview",
+        "gemini-robotics-er-1.6-preview": "gemini-robotics-er-1.6-preview",
+    }
+
+    def __init__(self, model_name, image_path):
+        super().__init__(model_name)
+        self.model_name = self.MODEL_ALIASES.get(model_name, model_name)
+        self.image_path = image_path
+        self.image_bytes, self.mime_type = self.load_image(image_path)
+        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        if api_key is None:
+            raise ValueError("GEMINI_API_KEY or GOOGLE_API_KEY is not set")
+        self.client = genai.Client(api_key=api_key)
+
+    def generate(
+            self,
+            prompt: str,
+            max_n_tokens: int,
+            temperature: float,
+            top_p: float):
+        output = self.API_ERROR_OUTPUT
+        for _ in range(self.API_MAX_RETRY):
+            try:
+                response = self.client.models.generate_content(
+                    model=self.model_name,
+                    contents=[
+                        types.Part.from_bytes(
+                            data=self.image_bytes,
+                            mime_type=self.mime_type,
+                        ),
+                        prompt,
+                    ],
+                    config=types.GenerateContentConfig(
+                        max_output_tokens=max_n_tokens,
+                        temperature=temperature,
+                        top_p=top_p,
+                        thinking_config=types.ThinkingConfig(thinking_budget=0),
+                    ),
+                )
+                output = response.text or ""
+                break
+            except Exception as e:
+                print(e)
+                time.sleep(self.API_RETRY_SLEEP)
+        return output
+
+    def batched_generate(
+            self,
+            prompts_list: List[str],
+            max_n_tokens: int,
+            temperature: float,
+            top_p: float = 1.0):
+        return [
+            self.generate(prompt, max_n_tokens, temperature, top_p)
+            for prompt in prompts_list
+        ]
+
+    def load_image(self, image_path):
+        content_type, _ = mimetypes.guess_type(image_path)
+        if content_type is None or not content_type.startswith("image/"):
+            raise ValueError(
+                f"Gemini Robotics-ER target expects an image path, got: {image_path}"
+            )
+
+        with open(image_path, "rb") as f:
+            return f.read(), content_type
 
 class DolphinModel(LanguageModel):
     def __init__(self, model_name, video_path):
