@@ -56,6 +56,11 @@ class WandBLogger:
 
             self.jailbreak_prompt = attack_list[jailbreak_ind]["prompt"]
             self.jailbreak_response = response_list[jailbreak_ind]
+        else:
+            try:
+                self.jailbreak_prompt = attack_list[-1]["prompt"]
+            except:
+                self.jailbreak_prompt = ""
 
         self.logger.log({
             "iteration":iteration,

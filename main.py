@@ -73,8 +73,10 @@ def main(args):
         print("Finished getting adversarial prompts.")
 
         # TODO: add functionality if it errors and outputs None
-        adv_prompt_list = [attack["prompt"] for attack in extracted_attack_list]
-        improv_list = [attack["improvement"] for attack in extracted_attack_list]
+        adv_prompt_list = [attack["prompt"] if attack else "" for attack in extracted_attack_list]
+        improv_list = [
+            attack["improvement"] if attack else "" for attack in extracted_attack_list
+        ]
 
         # Get target responses
         target_response_list = targetLM.get_response(adv_prompt_list)

@@ -19,6 +19,10 @@ cnt = 0
 
 from tqdm import tqdm
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 with open(json_path, "r") as f:
     data = json.load(f)
     for key, value in tqdm(list(data.items())):
@@ -69,6 +73,7 @@ with open(json_path, "r") as f:
             return main(args)
 
         malicious_output = run_case(malicious, target_malicious)
+        print(f"Malicious Output:\n{malicious_output}\n\n")
         #benign_output = run_case(benign, target_benign)
 
         entries.append([filename, "", "", "malicious", malicious_output])
