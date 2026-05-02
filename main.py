@@ -43,7 +43,6 @@ def main(args):
         else:
             raise NotImplementedError
 
-    
     batchsize = args.n_streams
     init_msg = get_init_msg(args.goal, args.target_str)
     processed_response_list = [init_msg for _ in range(batchsize)]
@@ -51,7 +50,7 @@ def main(args):
 
     for conv in convs_list:
         conv.set_system_message(attacker_system_prompt)
-    
+
     for iteration in range(1, args.n_iterations + 1):
 
         print(f"""\n{'='*36}\nIteration: {iteration}\n{'='*36}\n""")
@@ -68,15 +67,15 @@ def main(args):
                 ]
 
         # Get adversarial prompts and improvement
-       
+
         extracted_attack_list = attackLM.get_attack(convs_list, processed_response_list)
-        
+
         print("Finished getting adversarial prompts.")
 
         # TODO: add functionality if it errors and outputs None
         adv_prompt_list = [attack["prompt"] for attack in extracted_attack_list]
         improv_list = [attack["improvement"] for attack in extracted_attack_list]
-                
+
         # Get target responses
         target_response_list = targetLM.get_response(adv_prompt_list)
         print("Finished getting target responses.")
@@ -88,7 +87,6 @@ def main(args):
         if has_syntax_checker:
             syntax_scores = syntaxLM.score(adv_prompt_list,target_response_list)
             print("Finished getting syntax checker scores.")
-        
 
         # Print prompts, responses, and scores
         if has_syntax_checker:
@@ -116,8 +114,9 @@ def main(args):
 
         for i, conv in enumerate(convs_list):
             conv.messages = conv.messages[-2*(args.keep_last_n):]
-        
+
     logger.finish()
+    return logger.jailbreak_prompt
 
 
 if __name__ == '__main__':
@@ -230,11 +229,18 @@ if __name__ == '__main__':
         default = 0,
         help = "Row number of AdvBench, for logging purposes."
     )
-    parser.add_argument(
-        "--robobench-index",
-        type=int,
-        required=True
-    )
+
+    # parser.add_argument(
+    #     "--robobench-dataset",
+    #     type=str,
+    #     required=True,
+    # )
+    # parser.add_argument(
+    #     "--robobench-index",
+    #     type=int,
+    #     required=True
+    # )
+
     parser.add_argument(
         "--category",
         type = str,
