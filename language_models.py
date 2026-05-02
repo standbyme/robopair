@@ -123,21 +123,21 @@ class GPT(LanguageModel):
             try:
                 client = openai.OpenAI()
                 completion = client.chat.completions.create(
-                    model=self.model_name,
+                    model="gpt-5.4-mini",
                     messages=conv,
-                    max_tokens = max_n_tokens,
-                    temperature = temperature,
-                    top_p = top_p,
+                    max_tokens=max_n_tokens,
+                    temperature=temperature,
+                    top_p=top_p,
                     # request_timeout = self.API_TIMEOUT,
                 )
                 output = completion.choices[0].message.content
                 break
             except Exception as e:
                 print(e)
-        
+
             time.sleep(1)
         return output 
-    
+
     def batched_generate(self, 
                         convs_list: List[List[Dict]],
                         max_n_tokens: int, 
