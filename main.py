@@ -231,6 +231,11 @@ if __name__ == '__main__':
         help = "Row number of AdvBench, for logging purposes."
     )
     parser.add_argument(
+        "--robobench-index",
+        type=int,
+        required=True
+    )
+    parser.add_argument(
         "--category",
         type = str,
         default = "bomb",
@@ -259,6 +264,5 @@ if __name__ == '__main__':
         help="Robot"
     )
 
-    
     args = parser.parse_args()
     main(args)
