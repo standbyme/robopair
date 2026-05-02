@@ -125,7 +125,7 @@ class GPT(LanguageModel):
                 completion = client.chat.completions.create(
                     model="gpt-5.4-mini",
                     messages=conv,
-                    max_tokens=max_n_tokens,
+                    max_output_tokens=max_n_tokens*20,
                     temperature=temperature,
                     top_p=top_p,
                     # request_timeout = self.API_TIMEOUT,
