@@ -4,6 +4,34 @@ import pytz
 from datetime import datetime
 import pandas as pd
 import pathlib
+from collections.abc import Mapping
+
+
+def _json_safe(value):
+    """Return a value W&B can serialize with json.dump(sort_keys=True)."""
+    if isinstance(value, Mapping):
+        safe_dict = {}
+        for key, item in value.items():
+            safe_key = str(key)
+            if safe_key in safe_dict:
+                base_key = f"{type(key).__name__}:{safe_key}"
+                safe_key = base_key
+                duplicate_index = 2
+                while safe_key in safe_dict:
+                    safe_key = f"{base_key}:{duplicate_index}"
+                    duplicate_index += 1
+            safe_dict[safe_key] = _json_safe(item)
+        return safe_dict
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    if isinstance(value, pathlib.Path):
+        return str(value)
+    if hasattr(value, "item"):
+        try:
+            return _json_safe(value.item())
+        except (AttributeError, TypeError, ValueError):
+            pass
+    return value
 
 
 class WandBLogger:
@@ -37,7 +65,15 @@ class WandBLogger:
         # create a folder named robobench_dataset with pathlib if it doesn't exist
         # pathlib.Path(f"robobench_results/{robobench_dataset}").mkdir(parents=True, exist_ok=True)
 
-    def log(self, iteration: int, attack_list: list, response_list: list, judge_scores: list, syntax_scores: list = [None]):
+    def log(self, iteration: int, attack_list: list, response_list: list, judge_scores: list, syntax_scores: list = None):
+
+        if syntax_scores is None:
+            syntax_scores = [None] * len(response_list)
+
+        attack_list = [_json_safe(attack) if attack is not None else {} for attack in attack_list]
+        response_list = [_json_safe(response) for response in response_list]
+        judge_scores = [_json_safe(score) for score in judge_scores]
+        syntax_scores = [_json_safe(score) for score in syntax_scores]
 
         df = pd.DataFrame(attack_list)
         df["target_response"] = response_list
@@ -54,11 +90,11 @@ class WandBLogger:
                 self.logger.log({"queries_to_jailbreak": self.query_to_jailbreak})
                 self.is_jailbroken = True
 
-            self.jailbreak_prompt = attack_list[jailbreak_ind]["prompt"]
+            self.jailbreak_prompt = attack_list[jailbreak_ind].get("prompt", "")
             self.jailbreak_response = response_list[jailbreak_ind]
         else:
             try:
-                self.jailbreak_prompt = attack_list[-1]["prompt"]
+                self.jailbreak_prompt = attack_list[-1].get("prompt", "")
             except:
                 self.jailbreak_prompt = ""
 
@@ -71,7 +107,7 @@ class WandBLogger:
             "max_judge_score":self.table["judge_scores"].max(),
             "jailbreak_prompt":self.jailbreak_prompt,
             "jailbreak_response":self.jailbreak_response,
-            "data": wandb.Table(data = self.table)})
+            "data": wandb.Table(dataframe=self.table.reset_index(drop=True))})
 
         self.print_summary_stats(iteration)
 
