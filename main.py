@@ -18,6 +18,10 @@ import judges
 from conversers import load_attack_and_target_models
 from common import process_target_response, get_init_msg
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 def main(args):
 
     if args.algorithm == 'robopair':
@@ -73,10 +77,11 @@ def main(args):
         print("Finished getting adversarial prompts.")
 
         # TODO: add functionality if it errors and outputs None
-        adv_prompt_list = [attack["prompt"] if attack else "" for attack in extracted_attack_list]
-        improv_list = [
-            attack["improvement"] if attack else "" for attack in extracted_attack_list
-        ]
+        try:
+            adv_prompt_list = [attack["prompt"] for attack in extracted_attack_list]
+            improv_list = [attack["improvement"] for attack in extracted_attack_list]
+        except:
+            return ""
 
         # Get target responses
         target_response_list = targetLM.get_response(adv_prompt_list)
